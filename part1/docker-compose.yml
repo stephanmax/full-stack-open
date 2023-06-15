@@ -1,0 +1,13 @@
+version: '3'
+
+services:
+  dev:
+    image: node:19
+    user: node
+    working_dir: /usr/src/full_stack_open/part1
+    volumes:
+      - .:/usr/src/full_stack_open/part1
+    ports:
+      - 3000:3000
+    command: npm start
+
