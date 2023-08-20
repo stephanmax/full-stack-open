@@ -1,6 +1,19 @@
 import { useState, useEffect } from 'react'
 import personService from './services/persons.js'
 
+const Notification = ({message, type}) => {
+  if (message === null) {
+    console.log("YEAH")
+    return null
+  }
+
+  return (
+    <p className={`notification ${type}`}>
+      {message}
+    </p>
+  )
+}
+
 const Filter = ({filter, changeFilter}) => {
   return (
     <div>
@@ -46,6 +59,10 @@ const App = () => {
   const [newName, setNewName] = useState("")
   const [newNumber, setNewNumber] = useState("")
   const [filter, setFilter] = useState("")
+  const [notification, setNotification] = useState({
+    message: null,
+    type: "success"
+  })
 
   const changeNewName = (e) => {
     setNewName(e.target.value)
@@ -74,6 +91,27 @@ const App = () => {
           .update(updatedPerson)
           .then(response => {
             setPersons(persons.map(p => p.id !== updatedPerson.id ? p : updatedPerson))
+            setNotification({
+              message: `Changed number of ${updatedPerson.name} to ${updatedPerson.number}`,
+              type: 'success'
+            })
+            setTimeout(() => {
+              setNotification({
+                message: null
+              })
+            }, 3000)
+          })
+          .catch(error => {
+            setNotification({
+              message: `${updatedPerson.name} was already removed`,
+              type: "error"
+            })
+            setTimeout(() => {
+              setNotification({
+                message: null
+              })
+            }, 3000)
+            setPersons(persons.filter(p => p.id !== updatedPerson.id))
           })
       }
 
@@ -92,6 +130,15 @@ const App = () => {
         setNewName("")
         setNewNumber("")
       })
+    setNotification({
+      message: `Added ${newName} with number ${newNumber}`,
+      type: 'success'
+    })
+    setTimeout(() => {
+      setNotification({
+        message: null
+      })
+    }, 3000)
   }
 
   const removePerson = id => {
@@ -111,6 +158,7 @@ const App = () => {
   return (
     <div>
       <h1>Phonebook</h1>
+      <Notification message={notification.message} type={notification.type} />
       <Filter filter={filter} changeFilter={changeFilter} />
       <h2>Add New Entry</h2>
       <PersonForm newName={newName} newNumber={newNumber} changeNewName={changeNewName} changeNewNumber={changeNewNumber} addEntry={addEntry} />
