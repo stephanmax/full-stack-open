@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import personService from './services/persons.js'
 
 const Filter = ({filter, changeFilter}) => {
   return (
@@ -8,9 +9,9 @@ const Filter = ({filter, changeFilter}) => {
   )
 }
 
-const PersonForm = ({newName, newNumber, changeNewName, changeNewNumber, addNewPerson}) => {
+const PersonForm = ({newName, newNumber, changeNewName, changeNewNumber, addEntry}) => {
   return (
-    <form onSubmit={addNewPerson}>
+    <form onSubmit={addEntry}>
       <div>
         name: <input value={newName} onChange={changeNewName} />
       </div>
@@ -24,27 +25,24 @@ const PersonForm = ({newName, newNumber, changeNewName, changeNewNumber, addNewP
   )
 }
 
-const Persons = ({persons, filter}) => {
+const Persons = ({persons, filter, removePerson}) => {
   return (
     <ul>
       {persons
-        .filter(person => person.name.toLowerCase().includes(filter))
-        .map(person => <Person key={person.name} name={person.name} number={person.number} />)}
+        .filter(person => person.name.toLowerCase().includes(filter.toLowerCase()))
+        .map(person => <Person key={person.id} name={person.name} number={person.number} id={person.id} removePerson={removePerson} />)}
     </ul>
   )
 }
 
-const Person = ({name, number}) => {
+const Person = ({name, id, number, removePerson}) => {
   return (
-    <li>{name} {number}</li>
+    <li> {name} {number} <button onClick={() => removePerson(id)}>delete</button></li>
   )
 }
 
 const App = () => {
-  const [persons, setPersons] = useState([{
-    name: "Arto Hellas",
-    number: "040-1234567"
-  }]) 
+  const [persons, setPersons] = useState([]) 
   const [newName, setNewName] = useState("")
   const [newNumber, setNewNumber] = useState("")
   const [filter, setFilter] = useState("")
@@ -61,31 +59,66 @@ const App = () => {
     setFilter(e.target.value)
   }
 
-  const addNewPerson = (e) => {
+  const addEntry = (e) => {
     e.preventDefault()
     
     const duplicate = persons.find(person => person.name === newName)
     if (duplicate) {
-      alert(`${newName} is already added to phonebook`)
+      if (window.confirm(`${newName} is already added to the phonebook, replace the old number with the new one?`)) {
+        const updatedPerson = {
+          ...duplicate,
+          number: newNumber
+        }
+
+        personService
+          .update(updatedPerson)
+          .then(response => {
+            setPersons(persons.map(p => p.id !== updatedPerson.id ? p : updatedPerson))
+          })
+      }
+
+      setNewName("")
+      setNewNumber("")
       return
     }
 
-    setPersons(persons.concat({
-      name: newName,
-      number: newNumber
-    }))
-    setNewName("")
-    setNewNumber("")
+    personService
+      .create({
+        name: newName,
+        number: newNumber
+      })
+      .then(person => {
+        setPersons(persons.concat(person))
+        setNewName("")
+        setNewNumber("")
+      })
   }
+
+  const removePerson = id => {
+    personService
+      .remove(id)
+      .then(() => {
+        setPersons(persons.filter(p => p.id !== id))
+      });
+  }
+
+  useEffect(() => {
+    personService
+      .getAll()
+      .then(persons => setPersons(persons));
+  }, [])
 
   return (
     <div>
       <h1>Phonebook</h1>
       <Filter filter={filter} changeFilter={changeFilter} />
       <h2>Add New Entry</h2>
-      <PersonForm newName={newName} newNumber={newNumber} changeNewName={changeNewName} changeNewNumber={changeNewNumber} addNewPerson={addNewPerson} />
+      <PersonForm newName={newName} newNumber={newNumber} changeNewName={changeNewName} changeNewNumber={changeNewNumber} addEntry={addEntry} />
       <h2>Numbers</h2>
-      <Persons persons={persons} filter={filter} />
+      <Persons
+        persons={persons}
+        filter={filter}
+        removePerson={removePerson} />
     </div>
   )
 }
