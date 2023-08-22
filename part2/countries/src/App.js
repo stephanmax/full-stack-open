@@ -10,14 +10,13 @@ const Notification = ({message}) => {
   )
 }
 
-const Results = ({results}) => {
+const Results = ({results, showDetails}) => {
   if (results === null) {
     return null
   }
-
   return (
     <ul>
-      {results.map(result => <li key={result}>{result}</li>)}
+      {results.map(result => <li key={result}>{result} <button onClick={showDetails(result)}>show</button></li>)}
     </ul>
   )
 } 
@@ -26,7 +25,6 @@ const CountryInfo = ({country}) => {
   if (country === null) {
     return null
   }
-
   return <>
     <h1>{country.name.common}</h1>
     <dl>
@@ -89,12 +87,19 @@ const App = () => {
     setCountryDetails(null)
   }
 
+  const showDetails = (countryName) => () => {
+    setResults(null)
+    setCountryDetails(countries.current.find(
+      c => c.name.common === countryName
+    ))
+  }
+
   return <>
     <p>
       Find countries <input value={search} onChange={changeSearch} />
     </p>
     <Notification message={message} />
-    <Results results={results} />
+    <Results results={results} showDetails={showDetails} />
     <CountryInfo country={countryDetails} />
   </>
 }
