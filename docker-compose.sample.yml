@@ -9,6 +9,8 @@ services:
       - .:/usr/src/full_stack_open/
     ports:
       - 3000:3000
+    environment:
+      - REACT_APP_APIKEY=PUT_KEY_HERE
     command: npm run --prefix /usr/src/full_stack_open/part2/countries start
 
   db:

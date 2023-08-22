@@ -10,19 +10,19 @@ const Notification = ({message}) => {
   )
 }
 
-const Results = ({results, showDetails}) => {
+const Results = ({results, setCountryDetails}) => {
   if (results === null) {
     return null
   }
   return (
     <ul>
-      {results.map(result => <li key={result}>{result} <button onClick={showDetails(result)}>show</button></li>)}
+      {results.map(result => <li key={result.name.common}>{result.name.common} <button onClick={() => setCountryDetails(result)}>show</button></li>)}
     </ul>
   )
 } 
 
-const CountryInfo = ({country}) => {
-  if (country === null) {
+const CountryInfo = ({country, weather}) => {
+  if (country === null || weather === null) {
     return null
   }
   return <>
@@ -37,6 +37,14 @@ const CountryInfo = ({country}) => {
       <dt>Flag</dt>
       <dd><img src={country.flags.png} alt={`Flag of ${country.name.common}`} /></dd>
     </dl>
+    <h2>Weather in {country.capital[0]}</h2>
+    <p><img alt="Weather icon" src={`https://openweathermap.org/img/wn/${weather.weather[0].icon}@2x.png`} /></p>
+    <dl>
+      <dt>Temperature</dt>
+      <dd>{weather.main.temp} °C</dd>
+      <dt>Wind</dt>
+      <dd>{weather.wind.speed} m/s</dd>
+    </dl>
   </>
 }
 
@@ -47,12 +55,22 @@ const App = () => {
   const [results, setResults] = useState(null)
   const [message, setMessage] = useState(null)
   const [countryDetails, setCountryDetails] = useState(null)
+  const [weather, setWeather] = useState(null)
 
   useEffect(() => {
     axios
       .get("https://studies.cs.helsinki.fi/restcountries/api/all")
       .then(res => countries.current = res.data)
-}, [])
+  }, [])
+
+  useEffect(() => {
+    if (countryDetails === null) {
+      return
+    }
+    axios
+      .get(`http://api.openweathermap.org/data/2.5/weather?q=${countryDetails.capital[0]},${countryDetails.name.common}&APPID=${process.env.REACT_APP_APIKEY}&units=metric`)
+      .then(res => setWeather(res.data))
+  }, [countryDetails])
 
   const changeSearch = event => {
     const filter = event.target.value
@@ -83,15 +101,8 @@ const App = () => {
     }
 
     setMessage(null)
-    setResults(filteredCountries.map(c => c.name.common))
+    setResults(filteredCountries)
     setCountryDetails(null)
-  }
-
-  const showDetails = (countryName) => () => {
-    setResults(null)
-    setCountryDetails(countries.current.find(
-      c => c.name.common === countryName
-    ))
   }
 
   return <>
@@ -99,8 +110,8 @@ const App = () => {
       Find countries <input value={search} onChange={changeSearch} />
     </p>
     <Notification message={message} />
-    <Results results={results} showDetails={showDetails} />
-    <CountryInfo country={countryDetails} />
+    <Results results={results} setCountryDetails={setCountryDetails} />
+    <CountryInfo country={countryDetails} weather={weather} />
   </>
 }
 
