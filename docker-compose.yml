@@ -9,7 +9,7 @@ services:
       - .:/usr/src/full_stack_open/
     ports:
       - 3000:3000
-    command: npm run --prefix /usr/src/full_stack_open/part2/phonebook start
+    command: npm run --prefix /usr/src/full_stack_open/part2/countries start
 
   db:
     image: node:19
