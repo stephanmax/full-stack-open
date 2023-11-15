@@ -3,7 +3,6 @@ import personService from './services/persons.js'
 
 const Notification = ({message, type}) => {
   if (message === null) {
-    console.log("YEAH")
     return null
   }
 
